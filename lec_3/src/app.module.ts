@@ -1,8 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersController } from './controllers/users.controller';
 import { UserService } from './service/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserSchema, Users } from './schema';
+import { Orders, OrdersSchema, UserSchema, Users } from './schema';
+import { UserAuthorizationMiddleware } from './midellware/userAuthorization.middleware';
+import { OrdersController } from './controllers/orders.controller';
+import { OrderService } from './service';
 
 @Module({
   imports: [
@@ -15,9 +18,17 @@ import { UserSchema, Users } from './schema';
         name: Users.name,
         schema: UserSchema,
       },
+      {
+        name: Orders.name,
+        schema: OrdersSchema,
+      },
     ]),
   ],
-  controllers: [UsersController],
-  providers: [UserService],
+  controllers: [UsersController, OrdersController],
+  providers: [UserService, OrderService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(UserAuthorizationMiddleware).forRoutes('/orders');
+  }
+}
